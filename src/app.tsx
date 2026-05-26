@@ -16,296 +16,61 @@ type ScheduleState = {
   players: string[]
   games: Game[]
   totalGames: 6 | 12
-  allGames?: Game[] // Store full 12 games for 6-game mode toggle
-  showingFirstHalf?: boolean // Track which half we're showing for 6-game mode
+  chessPieceIndex: number
 }
 
+type GameTemplate = {
+  team1: [0 | 1 | 2 | 3, 0 | 1 | 2 | 3]
+  team2: [0 | 1 | 2 | 3, 0 | 1 | 2 | 3]
+  player1: 0 | 1 | 2 | 3
+  player2: 0 | 1 | 2 | 3
+}
+
+// Players A=0, B=1, C=2, D=3. All 3 team compositions × 2 board pairings.
+// All base games: player1 plays white, player2 plays black.
+const HARDCODED_GAMES: GameTemplate[] = [
+  // AB vs CD
+  { team1: [0, 1], team2: [2, 3], player1: 0, player2: 2 }, // A vs C (B vs D)
+  { team1: [0, 1], team2: [2, 3], player1: 0, player2: 3 }, // A vs D (B vs C)
+  // AC vs BD
+  { team1: [0, 2], team2: [1, 3], player1: 0, player2: 1 }, // A vs B (C vs D)
+  { team1: [0, 2], team2: [1, 3], player1: 0, player2: 3 }, // A vs D (C vs B)
+  // AD vs BC
+  { team1: [0, 3], team2: [1, 2], player1: 0, player2: 1 }, // A vs B (D vs C)
+  { team1: [0, 3], team2: [1, 2], player1: 0, player2: 2 }, // A vs C (D vs B)
+]
+
 function generateSchedule(players: string[], totalGames: 6 | 12): Game[] {
-  const games: Game[] = []
-  let gameId = 1
+  const baseGames: Game[] = HARDCODED_GAMES.map((t, i) => ({
+    id: i + 1,
+    team1: [players[t.team1[0]], players[t.team1[1]]],
+    team2: [players[t.team2[0]], players[t.team2[1]]],
+    player1: players[t.player1],
+    player2: players[t.player2],
+    color1: i % 2 === 0 ? 'white' : 'black',
+    color2: i % 2 === 0 ? 'black' : 'white',
+  }))
 
-  // Generate all team combinations (6 teams: AB, AC, AD, BC, BD, CD)
-  const teams: [string, string][] = []
-  for (let i = 0; i < players.length; i++) {
-    for (let j = i + 1; j < players.length; j++) {
-      teams.push([players[i], players[j]])
-    }
-  }
+  if (totalGames === 6) return baseGames
 
-  // Generate valid team matchups (teams that don't share players)
-  // There are exactly 3 matchups: AB vs CD, AC vs BD, AD vs BC
-  const matchups: [[string, string], [string, string]][] = []
-  for (let i = 0; i < teams.length; i++) {
-    for (let j = i + 1; j < teams.length; j++) {
-      const team1 = teams[i]
-      const team2 = teams[j]
+  const swappedGames: Game[] = baseGames.map((g, i) => ({
+    ...g,
+    id: i + 1 + HARDCODED_GAMES.length,
+    color1: g.color1 === 'white' ? 'black' : 'white',
+    color2: g.color2 === 'white' ? 'black' : 'white',
+  }))
 
-      // Check if teams share a player (invalid matchup)
-      if (team1[0] === team2[0] || team1[0] === team2[1] || 
-          team1[1] === team2[0] || team1[1] === team2[1]) {
-        continue
-      }
-
-      matchups.push([team1, team2])
-    }
-  }
-
-  if (totalGames === 12) {
-    // For 12 games: Each matchup generates 4 games
-    // 3 matchups × 4 games = 12 games total
-    // Each player pair should appear exactly twice (once white, once black)
-    for (let m = 0; m < matchups.length; m++) {
-      const [team1, team2] = matchups[m]
-      // Generate player pairs with alternating colors to ensure each pair appears twice
-      if (m === 0) {
-        // AB vs CD: A-C (white/black), A-C (black/white), A-D (white/black), B-C (white/black)
-        games.push({
-          id: gameId++,
-          team1,
-          team2,
-          player1: team1[0],
-          player2: team2[0],
-          color1: 'white',
-          color2: 'black'
-        })
-        games.push({
-          id: gameId++,
-          team1,
-          team2,
-          player1: team1[0],
-          player2: team2[0],
-          color1: 'black',
-          color2: 'white'
-        })
-        games.push({
-          id: gameId++,
-          team1,
-          team2,
-          player1: team1[0],
-          player2: team2[1],
-          color1: 'white',
-          color2: 'black'
-        })
-        games.push({
-          id: gameId++,
-          team1,
-          team2,
-          player1: team1[1],
-          player2: team2[0],
-          color1: 'white',
-          color2: 'black'
-        })
-      } else if (m === 1) {
-        // AC vs BD: A-B (white/black), A-B (black/white), C-D (white/black), C-D (black/white)
-        games.push({
-          id: gameId++,
-          team1,
-          team2,
-          player1: team1[0],
-          player2: team2[0],
-          color1: 'white',
-          color2: 'black'
-        })
-        games.push({
-          id: gameId++,
-          team1,
-          team2,
-          player1: team1[0],
-          player2: team2[0],
-          color1: 'black',
-          color2: 'white'
-        })
-        games.push({
-          id: gameId++,
-          team1,
-          team2,
-          player1: team1[1],
-          player2: team2[1],
-          color1: 'white',
-          color2: 'black'
-        })
-        games.push({
-          id: gameId++,
-          team1,
-          team2,
-          player1: team1[1],
-          player2: team2[1],
-          color1: 'black',
-          color2: 'white'
-        })
-      } else {
-        // AD vs BC: A-B (white/black), A-C (white/black), D-B (white/black), D-C (white/black)
-        games.push({
-          id: gameId++,
-          team1,
-          team2,
-          player1: team1[0],
-          player2: team2[0],
-          color1: 'white',
-          color2: 'black'
-        })
-        games.push({
-          id: gameId++,
-          team1,
-          team2,
-          player1: team1[0],
-          player2: team2[1],
-          color1: 'white',
-          color2: 'black'
-        })
-        games.push({
-          id: gameId++,
-          team1,
-          team2,
-          player1: team1[1],
-          player2: team2[0],
-          color1: 'white',
-          color2: 'black'
-        })
-        games.push({
-          id: gameId++,
-          team1,
-          team2,
-          player1: team1[1],
-          player2: team2[1],
-          color1: 'white',
-          color2: 'black'
-        })
-      }
-    }
-    return games
-  } else {
-    // For 6 games: Each player from team1 plays each player from team2 exactly once
-    // This gives us 4 games. Then add 2 more with opposite colors for different pairs
-    const [team1, team2] = matchups[0]
-    
-    // First 4 games: each player pair appears once
-    // A vs B, A vs D, C vs B, C vs D (for AC vs BD example)
-    games.push({
-      id: gameId++,
-      team1,
-      team2,
-      player1: team1[0],
-      player2: team2[0],
-      color1: 'white',
-      color2: 'black'
-    })
-    games.push({
-      id: gameId++,
-      team1,
-      team2,
-      player1: team1[0],
-      player2: team2[1],
-      color1: 'white',
-      color2: 'black'
-    })
-    games.push({
-      id: gameId++,
-      team1,
-      team2,
-      player1: team1[1],
-      player2: team2[0],
-      color1: 'white',
-      color2: 'black'
-    })
-    games.push({
-      id: gameId++,
-      team1,
-      team2,
-      player1: team1[1],
-      player2: team2[1],
-      color1: 'white',
-      color2: 'black'
-    })
-    
-    // Games 5-6: Add two more with opposite colors
-    // Repeat C vs B and C vs D with opposite colors (not A's games)
-    // This ensures: A plays B once and D once; C plays B twice and D twice
-    games.push({
-      id: gameId++,
-      team1,
-      team2,
-      player1: team1[1],
-      player2: team2[0],
-      color1: 'black',
-      color2: 'white'
-    })
-    games.push({
-      id: gameId++,
-      team1,
-      team2,
-      player1: team1[1],
-      player2: team2[1],
-      color1: 'black',
-      color2: 'white'
-    })
-    
-    return games
-  }
+  return [...baseGames, ...swappedGames]
 }
 
 function toggleAllColors(schedule: ScheduleState): ScheduleState {
-  if (schedule.totalGames === 12) {
-    // For 12 games, just toggle colors
-    return {
-      ...schedule,
-      games: schedule.games.map(game => ({
-        ...game,
-        color1: game.color1 === 'white' ? 'black' : 'white',
-        color2: game.color2 === 'white' ? 'black' : 'white'
-      }))
-    }
-  } else {
-    // For 6 games, switch to the other 6 games from full schedule
-    if (!schedule.allGames) {
-      // Generate full 12-game schedule
-      const allGames = generateSchedule(schedule.players, 12)
-      // Preserve winners from current games
-      const winnerMap = new Map<number, 'team1' | 'team2'>()
-      schedule.games.forEach(game => {
-        if (game.winner) {
-          winnerMap.set(game.id, game.winner)
-        }
-      })
-      // Apply winners to corresponding games in allGames
-      allGames.forEach(game => {
-        const winner = winnerMap.get(game.id)
-        if (winner) {
-          game.winner = winner
-        }
-      })
-      const newGames = allGames.slice(6, 12).map(game => ({ ...game }))
-      return {
-        ...schedule,
-        allGames,
-        games: newGames,
-        showingFirstHalf: false
-      }
-    } else {
-      // Preserve winners from current games
-      const winnerMap = new Map<number, 'team1' | 'team2'>()
-      schedule.games.forEach(game => {
-        if (game.winner) {
-          winnerMap.set(game.id, game.winner)
-        }
-      })
-      // Apply winners to allGames
-      schedule.allGames.forEach(game => {
-        const winner = winnerMap.get(game.id)
-        if (winner) {
-          game.winner = winner
-        }
-      })
-      // Toggle between first 6 and last 6
-      const showingFirstHalf = schedule.showingFirstHalf ?? true
-      const newGames = (showingFirstHalf ? schedule.allGames.slice(6, 12) : schedule.allGames.slice(0, 6))
-        .map(game => ({ ...game }))
-      return {
-        ...schedule,
-        games: newGames,
-        showingFirstHalf: !showingFirstHalf
-      }
-    }
+  return {
+    ...schedule,
+    games: schedule.games.map(game => ({
+      ...game,
+      color1: game.color1 === 'white' ? 'black' : 'white',
+      color2: game.color2 === 'white' ? 'black' : 'white'
+    }))
   }
 }
 
@@ -346,9 +111,8 @@ const chessPieces = [
   { white: '♙', black: '♟' }  // Pawn
 ]
 
-function getRandomChessPiece() {
-  const randomIndex = Math.floor(Math.random() * chessPieces.length)
-  return chessPieces[randomIndex]
+function getRandomChessPieceIndex() {
+  return Math.floor(Math.random() * chessPieces.length)
 }
 
 export function App() {
@@ -395,14 +159,7 @@ export function App() {
     }
 
     const games = generateSchedule(players, totalGames)
-    const allGames = totalGames === 6 ? generateSchedule(players, 12) : undefined
-    const newSchedule = { 
-      players, 
-      games, 
-      totalGames,
-      allGames,
-      showingFirstHalf: totalGames === 6 ? true : undefined
-    }
+    const newSchedule = { players, games, totalGames, chessPieceIndex: getRandomChessPieceIndex() }
     setSchedule(newSchedule)
     localStorage.setItem('bughouse-schedule', JSON.stringify(newSchedule))
   }
@@ -431,15 +188,7 @@ export function App() {
     const updatedGames = schedule.games.map(game =>
       game.id === gameId ? { ...game, winner: newWinner } : game
     )
-    // Also update allGames if it exists (for 6-game mode)
-    const updatedAllGames = schedule.allGames?.map(game =>
-      game.id === gameId ? { ...game, winner: newWinner } : game
-    )
-    const updatedSchedule = { 
-      ...schedule, 
-      games: updatedGames,
-      allGames: updatedAllGames
-    }
+    const updatedSchedule = { ...schedule, games: updatedGames }
     setSchedule(updatedSchedule)
     localStorage.setItem('bughouse-schedule', JSON.stringify(updatedSchedule))
   }
@@ -448,10 +197,7 @@ export function App() {
     window.print()
   }
 
-  const wins = schedule ? calculateWins(
-    schedule.allGames || schedule.games, 
-    schedule.players
-  ) : {}
+  const wins = schedule ? calculateWins(schedule.games, schedule.players) : {}
 
   if (!schedule) {
     return (
@@ -556,11 +302,10 @@ export function App() {
 
         <div class="games-list">
           {(() => {
-            // Select random chess piece once for the entire schedule
-            const pieces = getRandomChessPiece()
+            const pieces = chessPieces[schedule.chessPieceIndex ?? 0]
             const whitePiece = pieces.white
             const blackPiece = pieces.black
-            
+
             return schedule.games.map((game) => {
               const team1Str = game.team1.join(' & ')
               const team2Str = game.team2.join(' & ')

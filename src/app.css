@@ -189,6 +189,7 @@ h1 {
 
 .game-content {
   flex: 1;
+  min-width: 0;
   padding: 1.25rem 1.5rem;
   display: flex;
   flex-direction: column;
@@ -208,6 +209,7 @@ h1 {
   flex-direction: column;
   gap: 0.5rem;
   flex: 1;
+  min-width: 0;
   justify-content: center;
 }
 
@@ -515,5 +517,104 @@ h1 {
 
   .color-piece {
     font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .app {
+    padding: 0.5rem;
+  }
+
+  .game-number {
+    width: 1.5rem;
+    padding: 1.25rem 0.25rem;
+    font-size: 0.75rem;
+  }
+
+  .winner-btn-left,
+  .winner-btn-right {
+    width: 1.5rem;
+  }
+
+  .game-content {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .game-matchup-row {
+    gap: 0.5rem;
+  }
+
+  .vs-divider {
+    padding: 0 0.25rem;
+  }
+
+  .player-name {
+    gap: 0.25rem;
+  }
+
+  .player-line {
+    font-size: 0.9rem;
+    word-break: break-word;
+  }
+
+  .color-piece {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 320px) {
+  .app {
+    padding: 0.25rem;
+  }
+
+  .container {
+    min-width: 0;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .players-info p {
+    font-size: 0.9rem;
+    word-break: break-word;
+  }
+
+  .game-number {
+    width: 1rem;
+    padding: 0.5rem 0.125rem;
+    font-size: 0.7rem;
+  }
+
+  .winner-btn-left,
+  .winner-btn-right {
+    width: 1rem;
+    font-size: 0.75rem;
+  }
+
+  .game-content {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .game-matchup-row {
+    gap: 0.25rem;
+  }
+
+  .vs-divider {
+    padding: 0;
+    font-size: 0.65rem;
+  }
+
+  .player-name {
+    gap: 0.15rem;
+    flex-wrap: wrap;
+  }
+
+  .player-line {
+    font-size: 0.8rem;
+  }
+
+  .color-piece {
+    font-size: 0.9rem;
   }
 }
