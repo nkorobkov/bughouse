@@ -26,41 +26,43 @@ type GameTemplate = {
   player2: 0 | 1 | 2 | 3
 }
 
-// Players A=0, B=1, C=2, D=3. All 3 team compositions × 2 board pairings.
-// All base games: player1 plays white, player2 plays black.
+// Players A=0, B=1, C=2, D=3. Three team compositions × four top-board matchups
+// each = 12 distinct games. player1 is top-board white, player2 is top-board black.
+// In every pair of games per composition, A is on top once and bottom once, and
+// the two head-to-head opponent pairings are both covered. First 6 give each
+// player exactly 3 whites and 3 blacks; all 12 give 6 and 6.
 const HARDCODED_GAMES: GameTemplate[] = [
-  // AB vs CD
-  { team1: [0, 1], team2: [2, 3], player1: 0, player2: 2 }, // A vs C (B vs D)
-  { team1: [0, 1], team2: [2, 3], player1: 0, player2: 3 }, // A vs D (B vs C)
-  // AC vs BD
-  { team1: [0, 2], team2: [1, 3], player1: 0, player2: 1 }, // A vs B (C vs D)
-  { team1: [0, 2], team2: [1, 3], player1: 0, player2: 3 }, // A vs D (C vs B)
-  // AD vs BC
-  { team1: [0, 3], team2: [1, 2], player1: 0, player2: 1 }, // A vs B (D vs C)
-  { team1: [0, 3], team2: [1, 2], player1: 0, player2: 2 }, // A vs C (D vs B)
+  // AB vs CD — A plays C (top), then A plays D (bottom)
+  { team1: [0, 1], team2: [2, 3], player1: 0, player2: 2 }, // top A vs C, bot B vs D
+  { team1: [0, 1], team2: [2, 3], player1: 1, player2: 2 }, // top B vs C, bot A vs D
+  // AC vs BD — A plays D (top), then A plays B (bottom)
+  { team1: [0, 2], team2: [1, 3], player1: 0, player2: 3 }, // top A vs D, bot C vs B
+  { team1: [0, 2], team2: [1, 3], player1: 2, player2: 3 }, // top C vs D, bot A vs B
+  // AD vs BC — A plays B (top), then A plays C (bottom)
+  { team1: [0, 3], team2: [1, 2], player1: 0, player2: 1 }, // top A vs B, bot D vs C
+  { team1: [0, 3], team2: [1, 2], player1: 3, player2: 1 }, // top D vs B, bot A vs C
+  // Second half — the other opponent pairing for each composition
+  // AB vs CD — A plays D (top), then A plays C (bottom)
+  { team1: [0, 1], team2: [2, 3], player1: 0, player2: 3 }, // top A vs D, bot B vs C
+  { team1: [0, 1], team2: [2, 3], player1: 1, player2: 3 }, // top B vs D, bot A vs C
+  // AC vs BD — A plays B (top), then A plays D (bottom)
+  { team1: [0, 2], team2: [1, 3], player1: 0, player2: 1 }, // top A vs B, bot C vs D
+  { team1: [0, 2], team2: [1, 3], player1: 2, player2: 1 }, // top C vs B, bot A vs D
+  // AD vs BC — A plays C (top), then A plays B (bottom)
+  { team1: [0, 3], team2: [1, 2], player1: 0, player2: 2 }, // top A vs C, bot D vs B
+  { team1: [0, 3], team2: [1, 2], player1: 3, player2: 2 }, // top D vs C, bot A vs B
 ]
 
 function generateSchedule(players: string[], totalGames: 6 | 12): Game[] {
-  const baseGames: Game[] = HARDCODED_GAMES.map((t, i) => ({
+  return HARDCODED_GAMES.slice(0, totalGames).map((t, i) => ({
     id: i + 1,
     team1: [players[t.team1[0]], players[t.team1[1]]],
     team2: [players[t.team2[0]], players[t.team2[1]]],
     player1: players[t.player1],
     player2: players[t.player2],
-    color1: i % 2 === 0 ? 'white' : 'black',
-    color2: i % 2 === 0 ? 'black' : 'white',
+    color1: 'white',
+    color2: 'black',
   }))
-
-  if (totalGames === 6) return baseGames
-
-  const swappedGames: Game[] = baseGames.map((g, i) => ({
-    ...g,
-    id: i + 1 + HARDCODED_GAMES.length,
-    color1: g.color1 === 'white' ? 'black' : 'white',
-    color2: g.color2 === 'white' ? 'black' : 'white',
-  }))
-
-  return [...baseGames, ...swappedGames]
 }
 
 function toggleAllColors(schedule: ScheduleState): ScheduleState {
